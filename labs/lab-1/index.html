@@ -7,15 +7,30 @@
 	<!--
 		**
 		**	Задание 1. Создание объекта XmlHttpRequest
-		**		
+		**	
 	-->
+	<script src="..\xmlhttprequest.js"></script>	
 	<script type="text/javascript">
 		/*
 		**
 		**	Задание 2. Выборка книги 
 		**
 		*/
+		function getBookByNumber(num){
+			// Запрос
+			url = "getbooktxt.php?num=" + num;
+			request = getXmlHttpRequest();
+			request.open("GET", url, true);
+			request.send(null);
+			request.onreadystatechange = showAsyncRequestComplete;
+		}
 
+		function showAsyncRequestComplete(){
+			if (request.readyState === 4){
+			var result = document.getElementById("divResult");
+			result.firstChild.nodeValue = request.responseText;
+			}
+		}
 
 		
 		/*
@@ -23,6 +38,11 @@
 		**	Задание 3. Обработчик кнопки
 		**
 		*/ 
+		function showBook()
+		{
+			var numElement = document.getElementById("txtNum");
+			getBookByNumber(numElement.value);
+		}
 
 	</script>
 </head>
