@@ -30,8 +30,7 @@
 				if(request.readyState === 4){
 					alert("Size: \t" + request.getResponseHeader("Content-Length"));
 					alert(request.getAllResponseHeaders());
-				}
-				
+				}				
 			};
 			request.open("GET", fileName, true);
 			request.send(null);
