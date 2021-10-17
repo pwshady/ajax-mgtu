@@ -12,11 +12,45 @@
 		**	Задание 1. Список категорий
 		**
 		*/
-	
+
+		function fillCategories(){
+			url = "getcategories.php";
+			request = getXmlHttpRequest();
+			request.open("GET", url, true);
+			request.send(null);
+			request.onreadystatechange = showAsyncRequestComplete;
+			
+		}
+
+		function showAsyncRequestComplete(){
+			if (request.readyState === 4){
+				if(true){				
+					text = request.responseText
+					cat = text.split("\n");
+					if (cat.length == 0){
+						return;
+					}else{
+						for (var i = 0; i < cat.length; i++){
+							addOption(cat[i]);
+						}
+					}
+				}	
+			}
+		}
 		
 		// При завершении загрузки страницы
 		window.onload = function(){
-		
+			fillCategories();
+		}
+
+		function addOption(text){
+			var parts = text.split(":");
+			var selCategory = document.getElementById("selCategory");
+			var option = document.createElement("option");
+			option.setAttribute("value", parts[0]);
+			var optionText = document.createTextNode(parts[1]);
+			option.appendChild(optionText);
+			selCategory.appendChild(option);
 		}
 		
 	</script>
@@ -27,7 +61,7 @@
 		<div>
 			<label for="selCategory">Категория</label>
 			<select id="selCategory"></select>
-			<button onclick="alert('А это следующая лабораторная работа')">Показать</button>
+			<button onclick=fillCategories()>Показать</button>
 		</div>
 	</form>
 </body>

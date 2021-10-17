@@ -12,15 +12,114 @@
 		** Задание 1. Код вставлять сюда
 		**
 		*/
+		function fillCategories(){
+			url = "getcategories.php";
+			request = getXmlHttpRequest();
+			request.open("GET", url, true);
+			request.send(null);
+			request.onreadystatechange = showAsyncRequestComplete;
+			
+		}
+
+		function showAsyncRequestComplete(){
+			if (request.readyState === 4){
+				if(true){				
+					text = request.responseText
+					cat = text.split("\n");
+					if (cat.length == 0){
+						return;
+					}else{
+						for (var i = 0; i < cat.length; i++){
+							addOption(cat[i]);
+						}
+					}
+				}	
+			}
+		}
+		
+		// При завершении загрузки страницы
+		window.onload = function(){
+			fillCategories();
+		}
+
+		function addOption(text){
+			var parts = text.split(":");
+			var selCategory = document.getElementById("selCategory");
+			var option = document.createElement("option");
+			option.setAttribute("value", parts[0]);
+			var optionText = document.createTextNode(parts[1]);
+			option.appendChild(optionText);
+			selCategory.appendChild(option);
+		}
 		
 		/*
 		**
 		**	Задание 2. Выборка книг 
 		**
 		*/
-		function showBooks(){
-			alert("Покажем книгу...");  // Удалите эту строчку! 
+		//Class Book
+		function Book(author,title, image){
+			this.author = author;
+			this.title = title;
+			this.image = image;
 		}
+
+		//Array book in category
+		var books = [];
+
+		function showBooks(){
+			
+			var selCategory = document.getElementById("selCategory");
+			if (selCategory.selectedIndex < 0){
+				alert("Sel Category");  // Удалите эту строчку! 
+				return;
+			}
+			var catId = selCategory.options[selCategory.selectedIndex].value;
+			//Server request
+			var request = getXmlHttpRequest();
+			request.onreadystatechange = function(){
+				if (request.readyState != 4) return;
+				//
+				var responseText = String(request.responseText);
+				var bookStrings = responseText.split("\n");
+				books = [];
+				for (var i = 0; i < bookStrings.length; i++){
+					if (bookStrings[i] == "") continue;
+					var parts = bookStrings[i].split("|");
+					books[i] = new Book(parts[0], parts[1],parts[2]);
+				}
+
+				//Table books
+				var tableBooks = document.getElementById("tableBooks");
+				//Clear table books
+				while (tableBooks.hasChildNodes())
+					tableBooks.removeChild(tableBooks.lastChild);
+				//Create table books
+				for (var i = 0; i < books.length; i++){
+					//Create row
+					var row = tableBooks.insertRow(tableBooks.rows.length);
+					//Create cell table
+					var rowAuthor = row.insertCell(row.cells.length);
+					rowAuthor.appendChild(document.createTextNode(books[i].author));
+					var rowTitle = row.insertCell(row.cells.length);
+					rowTitle.appendChild(document.createTextNode(books[i].title));
+					//Backlight
+					row.onmouseover = new Function("rowHighLight(this, '#fcc')");
+					row.onmouseout = new Function("rowHighLight(this, '')");
+					//Save image
+					row.title = books[i].image;
+					//Row onclick
+					row.onclick = new Function("showImage(this)");
+				}
+			};
+			//Method Post
+			var postData = "cat=" + catId;
+			request.open("POST", "postbooksbycat.php", true);
+			request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+			request.send(postData);
+
+		}
+
 		
 		
 		/*
@@ -28,6 +127,34 @@
 		**	Задание 3. Показ изображений
 		**
 		*/
+		//Backlight row table
+		function rowHighLight(rowObject, color){
+			rowObject.style.background = color;
+		}
+
+		function isExists(url){
+			var request = getXmlHttpRequest();
+			request.open("HEAD", url, false);
+			request.send(null);
+			return (request.status == 200);
+		}
+
+		//Show image
+		function showImage(rowObject){
+			var imagePath = "../../images/";
+			var image = imagePath + rowObject.title;
+			var divBookInfo = document.getElementById("divBookInfo");
+			var img = divBookInfo.getElementsByTagName("img")[0];
+
+			if (isExists(image)){
+				img.src = image;
+				divBookInfo.style.display = "block";
+			}else{
+				img.src = "";
+				divBookInfo.style.display = "";
+			}
+		}
+		
 		
 
 	</script>
@@ -38,7 +165,7 @@
 		<div>
 			<label for="selCategory">Категория</label>
 			<select id="selCategory"></select>
-			<button onclick="">Показать</button>
+			<button onclick="showBooks()">Показать</button>
 		</div>
 		
 		<div id="divBookInfo">
