@@ -28,7 +28,11 @@
 		**	Задание 1. Отображение формы
 		**
 		*/
-		function showLoginForm(){}
+		function showLoginForm(){
+			document.body.style.backgroundColor = "gray";
+			var formLogin = document.getElementById("frmLogin");
+			formLogin.style.display = "block";
+		}
 		
 		/*
 		**
@@ -40,10 +44,54 @@
 		var ticket;
 		
 		// Функция проверки пользователя
-		function validateUser(){}
+		function validateUser(){
+			//Create object UserInfo
+			var txtLogin = document.getElementById("txtLogin");
+			var txtPassword = document.getElementById("txtPassword");
+			var userInfo = new UserInfo();
+			userInfo.login = txtLogin.value;
+			userInfo.password = txtPassword.value;
+
+			//Data transmission to the server
+			var jsonUserInfo = JSON.stringify(userInfo);
+			var request = getXmlHttpRequest();
+
+			request.onreadystatechange = function(){
+				if (request.readyState !=4) {
+
+					return;
+				}
+				//Reading received ticket
+
+				ticket = JSON.parse(request.responseText);
+				if (ticket.valid) {
+					//Ticket true
+					var formLogin = document.getElementById("frmLogin");
+					formLogin.style.display = "";
+					document.body.style.backgroundColor = "";
+					//Hide the login button
+					var buttonEnter = document.getElementById("divUsers").getElementsByTagName("button")[0];
+					buttonEnter.style.display = "none";	
+					
+					//Display a list of users
+					showOnLineUsers();
+				}else{
+					//Error message
+					var divMessage = document.getElementById("divMessage");
+					divMessage.style.display = "block";
+				}
+			}
+			request.open("POST", "user_auth.php", true);
+			request.setRequestHeader("Content-Type", "text/plain");
+			request.setRequestHeader("Content-Lenght", jsonUserInfo.length);
+			request.send(jsonUserInfo);
+		}
 
 		// Функция гашения сообщения об ошибке
-		function hideErrorMessage() {}
+		function hideErrorMessage() {
+			var divMessage = document.getElementById("divMessage");
+			divMessage.style.display = "";
+		}
 
 		
 		/*
@@ -52,7 +100,37 @@
 		**
 		*/
 		
-		function showOnLineUsers() {}
+		function showOnLineUsers(){
+			var divUsers = document.getElementById("divUsers")
+			var ul = divUsers.getElementsByTagName("ul")[0];
+			//Request users online
+			var jsonTicket = JSON.stringify(ticket);
+			var request = getXmlHttpRequest();
+			request.onreadystatechange = function(){
+				if (request.readyState !=4) {
+					return;
+				}
+				// Get user list
+				users = JSON.parse(request.responseText);
+				//Clear user list
+				while(ul.hasChildNodes()){
+					ul.removeChild(ul.lastChild);
+				}
+				//Display a list of uset
+				for(var i = 0; i < users.length; i++){
+					var li = document.createElement("li");
+					li.id = users[i].id;
+					var liText = document.createTextNode(users[i].name);
+					li.appendChild(liText);
+					ul.appendChild(li);
+				}
+				//Timer
+				window.setTimeout("showOnLineUsers()", 3000);
+			}
+			request.open("POST", "get_online_users.php", true);
+			request.setRequestHeader("Content-Type", "text/plain");
+			request.send(jsonTicket);
+		}
 
 		
 	</script>
