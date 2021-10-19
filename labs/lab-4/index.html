@@ -35,7 +35,27 @@
 		**	Задание 1. Получение способов доставки
 		**
 		*/
-		function getDeliveryMethods(){}
+		function getDeliveryMethods(){
+			var msg = new XMLRPCMessage("eshop.getDeliveryMethods", "utf-8"); 
+			var rawData = msg.xml();
+			// Запрос сервера
+			// Объект запроса
+			var req = getXmlHttpRequest();
+			req.onreadystatechange = function(){
+					if (req.readyState != 4) return;
+					// Получаем DOM документ
+					var dom = req.responseXML;
+					console.log(dom);
+
+					// /console.log(param.firstChild.nodeValue);
+					showDelivery(dom);
+				};
+			req.open("POST", "lab-4-server.php", true);
+			req.setRequestHeader("Content-Type", "text/xml");
+			//req.setRequestHeader("Content-Length", rawData.length);
+			req.send(rawData);	
+
+		}
 		
 		
 		/* 
@@ -43,7 +63,12 @@
 		**	Задание 2. Отображение способов доставки
 		**
 		*/
-		function showDelivery(xmlDOM){}
+		function showDelivery(xmlDOM){
+			var html = xsltTransform(xmlDOM, xslDelivery);
+			//alert(html);
+			var divDelivery = document.getElementById("divDelivery");
+			divDelivery.innerHTML += html;
+		}
 		
 		
 		/*
@@ -51,7 +76,41 @@
 		**	Задание 3. Получение данных о заказе
 		**
 		*/
-		function calculateOrder(){}
+		function calculateOrder(){
+			//Параметры запроса
+			var sum;
+			var deviveryId;
+			try{
+				sum = document.getElementById("txtOrderSum").value;
+				selDelivery = document.getElementById("selDelivery");
+				deviveryId = selDelivery.options[selDelivery.selectedIndex].value;
+			}catch(e){
+				alert("Error");
+				return false;
+			}
+
+			//Create message
+			var msg = new XMLRPCMessage("eshop.calculateOrder", "utf-8");
+			msg.addParameter(sum);
+			msg.addParameter(deviveryId);
+			var rawData = msg.xml();
+
+			//Server request
+			var req = getXmlHttpRequest();
+			req.onreadystatechange = function(){
+					if (req.readyState != 4) return;
+					// Получаем DOM документ
+					var dom = req.responseXML;
+					// /console.log(param.firstChild.nodeValue);
+					if (!isError(dom)){
+						showOder(dom);
+					}
+				};
+			req.open("POST", "lab-4-server.php", true);
+			req.setRequestHeader("Content-Type", "text/xml");
+			//req.setRequestHeader("Content-Length", rawData.length);
+			req.send(rawData);	
+		}
 		
 		
 		/*
@@ -59,7 +118,12 @@
 		**	Задание 4. Отображение данных о заказе
 		**
 		*/
-		function showOder(xmlDOM){}
+		function showOder(xmlDOM){
+
+			var html = xsltTransform(xmlDOM, xslOrder);
+			var divOrder = document.getElementById("divOrder");
+			divOrder.innerHTML = html;
+		}
 		
 	
 		// Инициализация страницы
@@ -73,10 +137,10 @@
 			req.open("GET", "order.xsl", false);
 			req.send(null);
 			xslOrder = req.responseXML;			
-			
 			// Получим способы доставки
-			//getDeliveryMethods();
+			getDeliveryMethods();
 		}
+
 	</script>
 </head>
 <body>

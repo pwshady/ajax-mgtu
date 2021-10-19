@@ -1,4 +1,5 @@
 <?php
+
 // Способы доставки
 $deliveryMethods = array
 (
@@ -43,9 +44,12 @@ $xmlrpc_methods = array
 );
 
 // Обработка запроса
-$xmlrpc_request = XMLRPC_parse($HTTP_RAW_POST_DATA);
+$rawPost = file_get_contents('php://input');
+$xmlrpc_request = XMLRPC_parse($rawPost);
+//$xmlrpc_request = XMLRPC_parse($HTTP_RAW_POST_DATA);
 $methodName = XMLRPC_getMethodName($xmlrpc_request);
 $params = XMLRPC_getParams($xmlrpc_request);
+$test = count($params);
 if(isset($xmlrpc_methods[$methodName])){
     // Вызов метода
     $result = $xmlrpc_methods[$methodName]($params); 
@@ -65,11 +69,12 @@ function getDeliveryMethods($params){
 
 // Функция возвращает расчет стоимости заказа
 function calculateOrder($params){
+
 	global $deliveryMethods, $deliveryCost, $taxes;
 	
 	// Параметры
-	$sum = $params[0];
-	$deviveryId = $params[1];
+	$sum = 1000;
+	$deviveryId = 2;
 	
 	// Расчет заказа
 	$result = array();

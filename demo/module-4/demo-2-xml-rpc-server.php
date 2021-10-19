@@ -26,6 +26,7 @@ if(isset($xmlrpc_methods[$methodName])){
 // ----------------------- Методы -------------------------
 function sayHello($params){
 	$result = 'Привет, ' . $params[0] . '!';
+
 	XMLRPC_response(XMLRPC_prepare($result), WEBLOG_XMLRPC_USERAGENT);
 }
 ?>
