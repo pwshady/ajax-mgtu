@@ -11,6 +11,7 @@
 		// Адреса сервера
 		var serverXml = "server/get-section-xml.php";
 		var serverHtml = "server/get-section-html.php";
+		var bookmarkName = "chapter";
 		
 		// XSLT преобразование
 		var fb2html;
@@ -21,8 +22,50 @@
 		**	Задание 1. Загрузка главы книги
 		**
 		*/
+		var stateObj = {};
+		//Сохранение главы ы закладках
+		function saveBookmark(name,chapter){
+			window.localStorage.setItem(name, chapter);
+		}
+
+		window.addEventListener('popstate', function (event) {
+			//Запрос главы
+			if(!event.state){
+				getChapter(1);
+			}else{
+				saveBookmark(bookmarkName, event.state.page);
+				//Запрос главы с сервера
+				getAction(event.state.page);
+			}
+		});
+
+		function getAction(no){
+			//Запрос главы с сервера
+			var request = getXmlHttpRequest();
+			request.onreadystatechange = function(){
+				if(request.readyState != 4){
+					return;
+				}
+				//Получаем DOM
+				var xmlDOM = request.responseXML;
+				//No errors
+				if(xmlDOM){
+					showChapter(xmlDOM, no);
+				}
+			}
+			request.open("GET", serverXml + "?no=" + no, true);
+			request.setRequestHeader("Content-Type", "text/xml");
+			request.send(null);
+		}
+
 		function getChapter(no){
-	
+			//Message user
+			document.getElementById("divMessageLoad").style.display = "block";
+			stateObj.page = no;
+			history.pushState(stateObj, "", "#" + no);
+			saveBookmark(bookmarkName, no);
+			//Запрос главы с сервера
+			getAction(no);
 		}
 		
 		/* 
@@ -32,8 +75,29 @@
 		*/
 		function showChapter(xmlDOM, currentChapter){
 			// Узнаем общее число глав
+			//var chapterCount = Number(xmlDOM.documentElement.firstChild.getAttribute("count"));
 			var chapterCount = xmlDOM.documentElement.firstChild.getAttribute("count");
+			//Введем ссылки go back
+			var divChapters = document.getElementById("divChapters");
+			var previousChapter = Number(currentChapter) - 1;
+			var nextChapter = Number(currentChapter) + 1;
 
+			divChapters.innerHTML = "";
+			if (previousChapter > 0){
+				divChapters.innerHTML += '<a href="' + serverHtml + '?no=' + previousChapter +
+				'" onclick="getChapter(' + previousChapter + ');return false">Предыдущая глава</a>';
+			}
+			if (nextChapter < chapterCount){
+				divChapters.innerHTML += '&nbsp;<a href="' + serverHtml + '?no=' + nextChapter +
+				'" onclick="getChapter(' + nextChapter + ');return false">Следующая глава</a>';
+			}
+
+			//Производим преобразования
+			var html = xsltTransform(xmlDOM, fb2html);
+			var divResult = document.getElementById("divResult");
+			divResult.innerHTML = html;
+			//Гашение сообщения пользователю
+			document.getElementById("divMessageLoad").style.display = "";
 		}
 
 		/*
@@ -50,12 +114,21 @@
 			req.open("GET", "server/fb2html.xsl", false);
 			req.send(null);
 			fb2html = req.responseXML;
+
 			
 			// Уберем сообщение пользователю
 			divMessageLoad.style.display = "none";
+
+			function readBookmark(name){
+				if(localStorage.getItem(name)){
+					return Number(window.localStorage.getItem(name));
+				}else{
+					return 1;
+				}
+			}
 			
 			// Показ первой главы
-			getChapter(1);
+			getChapter(readBookmark(bookmarkName));
 		}
 	</script>
 </head>
