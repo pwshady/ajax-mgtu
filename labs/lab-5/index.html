@@ -47,7 +47,17 @@
 		**						
 		*/
 		function registerSession(){
-			
+			var message = loadXML("server/messages/registerSession-request.xml");
+			sendMessage(message, "urn:SampleServer2-registerSession", true, registerSessionCallBack);
+		}
+
+		// Обратный вызов метода registerSession
+		function registerSessionCallBack(req){
+			// Считаем из полученного сообщения результат
+			var result = req.responseXML.getElementsByTagName("registerSessionResponse")[0];
+			sessionId = result.firstChild.nodeValue;
+			var divId = document.getElementById("sessId");
+			divId.innerHTML = sessionId;
 		}
 
 		
@@ -57,7 +67,18 @@
 		**
 		*/
 		function addToBasket(bookId){
+			var message = loadXML("server/messages/addToBasket-request.xml");
+			setParameter("bookId", bookId, message);
+			setParameter("sessionId", sessionId, message);
+			sendMessage(message, "urn:SampleServer2-addToBasket", true, addToBasketCallBack);
+		}
 
+		// Обратный вызов метода addToBasket
+		function addToBasketCallBack(req){
+			// Считаем из полученного сообщения результат
+			var result = req.responseXML.getElementsByTagName("addToBasketResult")[0];
+			alert(result.firstChild.nodeValue);
+			showBasket();
 		}
 		
 
@@ -67,8 +88,15 @@
 		**
 		*/
 		function showBasket(){
-
+			var message = loadXML("server/messages/getBasket-request.xml");
+			// Синхронный запрос сервера
+			var messageResponse = sendMessage(message, "urn:Samurn:SampleServer2-getBasket", false, null);
+			// Загрузка преобразования
+			var xsltBooks = loadXML(serverBase + "xslt/getBasket.xsl");
+			// Отображение списка категорий
+			document.getElementById("basketPlaceholder").innerHTML = xsltTransform(messageResponse, xsltBooks);
 		}
+
 
 		
 		/*
